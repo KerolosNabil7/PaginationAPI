@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PaginationAPI.Data;
+using PaginationAPI.Models;
+using PaginationAPI.Wrappers;
 
 namespace PaginationAPI.Controllers
 {
@@ -20,11 +22,11 @@ namespace PaginationAPI.Controllers
             var customers = await _context.Customers.ToListAsync();
             return Ok(customers);
         }
-        [HttpGet("GetCustomerById")]
+        [HttpGet("GetCustomerById({Id})")]
         public async Task<IActionResult> GetCustomerById(int Id)
         {
             var customer = await _context.Customers.FindAsync(Id);
-            return Ok(customer);
+            return Ok(new Response<Customer>(customer));
         }
     }
 }
