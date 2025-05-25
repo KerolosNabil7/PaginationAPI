@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PaginationAPI.Data;
 using PaginationAPI.Filters;
+using PaginationAPI.Helpers;
 using PaginationAPI.Models;
+using PaginationAPI.Services;
 using PaginationAPI.Wrappers;
 
 namespace PaginationAPI.Controllers
@@ -13,20 +15,24 @@ namespace PaginationAPI.Controllers
     public class CustomerController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        public CustomerController(ApplicationDbContext context)
+        private readonly IUriService _uriServeice;
+        public CustomerController(ApplicationDbContext context, IUriService uriServeice)
         {
             _context = context;
+            _uriServeice = uriServeice;
         }
         [HttpGet("GetAllCustomers")]
         public async Task<IActionResult> GetAllCustomers([FromQuery] PaginationFilter filter)
         {
+            var route = Request.Path.Value;
             var validFilter = new PaginationFilter(filter.PageNumber, filter.PageSize);
-            var customers = await _context.Customers
+            var pagedData = await _context.Customers
                 .Skip((validFilter.PageNumber - 1) * validFilter.PageSize)
                 .Take(validFilter.PageSize)
                 .ToListAsync();
             var totalRecords = await _context.Customers.CountAsync();
-            return Ok(new PagedResponse<List<Customer>>(customers, filter.PageNumber, filter.PageSize));
+            var pagedReponse = PaginationHelper.CreatePagedReponse<Customer>(pagedData, validFilter, totalRecords, _uriServeice, route);
+            return Ok(pagedReponse);
         }
         [HttpGet("GetCustomerById({Id})")]
         public async Task<IActionResult> GetCustomerById(int Id)
